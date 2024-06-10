@@ -29,7 +29,6 @@ float nlRenderGodRayIntensity(vec3 cPos, vec3 worldPos, float t, vec2 uv1, float
   vec3 offset = cPos - 16.0*fract(worldPos*0.0625);
   offset = abs(2.0*fract(offset*0.0625)-1.0);
   offset = offset*offset*(3.0-2.0*offset);
-  //offset = 0.5 + 0.5*cos(offset*0.392699082);
 
   //vec3 ofPos = wPos+offset;
   vec3 nrmof = normalize(worldPos);

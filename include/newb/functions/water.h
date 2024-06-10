@@ -13,6 +13,40 @@ float calculateFresnel(float cosR, float r0) {
   return r0 + (1.0-r0)*a2*a2*a;
 }
 
+float waterMap( vec2 pos ) {
+	vec2 posm = pos * m2;
+
+	return abs( fbm( vec3( 8.*posm, 1.0 ))-0.5 )* 0.1;
+}
+
+vec3 wReflection(vec3 viewDir, vec3 wPos, float rainFactor, float t, vec4 FOG_COLOR, vec3 zenithCol, vec3 horizonCol, vec3 horizonEdgeCol){
+    
+    vec3 wRefl;
+    #if defined(NL_WATER_CLOUD_REFLECTION)
+      if (wPos.y < 0.0) {
+        vec2 pa = viewDir.xz/viewDir.y;
+        //vec3 reflPos = vec3(wPos.x, -wPos.y, wPos.z)*vec3(2.0,1.0,2.0);
+        vec2 reflPos = wPos.xz - pa*80.0*(1.0-0.0);
+        float fade = clamp(2.0 - 0.004*length(reflPos), 0.0, 1.0);
+
+        #ifdef NL_AURORA
+        vec4 aurora = renderAurora(reflPos.xyy, t, rainFactor, FOG_COLOR.rgb);
+        wRefl += 4.0*aurora.rgb*aurora.a*fade;
+        #endif
+
+        #if NL_CLOUD_TYPE == 2 
+        vec4 clouds = renderClouds(viewDir, reflPos.xyy, rainFactor, t,zenithCol, FOG_COLOR.rgb );
+        wRefl = mix(wRefl, NL_WATER_CLOUD_REFL*clouds.rgb, clouds.a*fade);
+        #elif NL_CLOUD_TYPE == 1
+        vec4 clouds = renderCloudsSimple(reflPos.xyy, t, rainFactor, zenithCol, horizonCol, horizonEdgeCol);
+        wRefl = mix(wRefl, NL_WATER_CLOUD_REFL*clouds.rgb, clouds.a*fade);
+        #endif
+      }
+    #endif
+    
+return wRefl;
+}
+
 vec4 nlWater(
   inout vec3 wPos, inout vec4 color, vec4 COLOR, vec3 viewDir, vec3 light, vec3 cPos, vec3 tiledCpos,
   float fractCposY, vec3 FOG_COLOR, vec3 horizonCol, vec3 horizonEdgeCol, vec3 zenithCol,
@@ -27,7 +61,7 @@ vec4 nlWater(
   if (fractCposY > 0.0) { // reflection for top plane
     // bump map
     bump *= disp(tiledCpos, t) + 0.12*sin(t*2.0 + dot(cPos, vec3_splat(NL_CONST_PI_HALF)));
-
+    
     // calculate cosine of incidence angle and apply water bump
     cosR = abs(viewDir.y);
     cosR = mix(cosR, 1.0-cosR*cosR, bump);
@@ -37,21 +71,25 @@ vec4 nlWater(
     waterRefl = getSkyRefl(horizonEdgeCol, horizonCol, zenithCol, viewDir, FOG_COLOR, t, -wPos.y, rainFactor, end, underWater, nether);
 
     // cloud and aurora reflection
-    #if defined(NL_WATER_CLOUD_REFLECTION)
+    #if defined(NL_WATER_CLOUD_REFLECTION2)
       if (wPos.y < 0.0) {
         vec2 parallax = viewDir.xz/viewDir.y;
         vec2 projectedPos = wPos.xz - parallax*100.0*(1.0-bump);
+       // vec3 projectedPos = vPos.xyz;
         float fade = clamp(2.0 - 0.004*length(projectedPos), 0.0, 1.0);
         //projectedPos += fade*parallax;
 
         #ifdef NL_AURORA
         vec4 aurora = renderAurora(projectedPos.xyy, t, rainFactor, FOG_COLOR);
-        waterRefl += 2.0*aurora.rgb*aurora.a*fade;
+        waterRefl += 4.0*aurora.rgb*aurora.a*fade;
         #endif
 
-        #if NL_CLOUD_TYPE == 1
+        #if NL_CLOUD_TYPE == 2 
+        vec4 clouds = renderClouds(viewDir, projectedPos.xyy, rainFactor, t,zenithCol, FOG_COLOR );
+        waterRefl = mix(waterRefl, 0.1*clouds.rgb, clouds.a*fade);
+        #elif NL_CLOUD_TYPE == 1
         vec4 clouds = renderCloudsSimple(projectedPos.xyy, t, rainFactor, zenithCol, horizonCol, horizonEdgeCol);
-        waterRefl = mix(waterRefl, 1.5*clouds.rgb, clouds.a*fade);
+        waterRefl = mix(waterRefl, 0.1*clouds.rgb, clouds.a*fade);
         #endif
       }
     #endif
@@ -92,7 +130,11 @@ vec4 nlWater(
 
 #ifdef NL_WATER_WAVE
   if(camDist < 14.0) {
+    #ifdef NL_WATER_NOISE
+    wPos.y -= 0.2*noise(3.0*wPos.xyz - 0.2*t) / 1.0 * 1.0;
+    #else
     wPos.y -= bump;
+    #endif
   }
 #endif
 
