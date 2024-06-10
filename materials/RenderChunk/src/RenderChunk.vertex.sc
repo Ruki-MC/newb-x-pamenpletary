@@ -2,7 +2,7 @@ $input a_color0, a_position, a_texcoord0, a_texcoord1
 #ifdef INSTANCING
   $input i_data0, i_data1, i_data2, i_data3
 #endif
-$output v_color0, v_color1, v_fog, v_refl, v_texcoord0, v_lightmapUV, v_extra
+$output v_color0, v_color1, v_fog, v_refl, v_texcoord0, v_lightmapUV, v_extra, vPos, RainTime, wPos, v_FOG_COLOR, v_zenithCol, v_horizonCol, v_horizonEdgeCol
 
 #include <bgfx_shader.sh>
 #include <newb/main.sh>
@@ -127,6 +127,12 @@ void main() {
     fogColor.a = mix(fogColor.a, 1.0, NL_GODRAY*nlRenderGodRayIntensity(cPos, worldPos, t, uv1, relativeDist, FogColor.rgb));
   #endif
 
+  if (underWater) {
+#ifdef NL_UNDER_WATER_FOG_INTENSITY
+fogColor.a = NL_UNDER_WATER_FOG_INTENSITY;
+#endif
+}
+
   if (nether) {
     // blend fog with void color
     fogColor.rgb = colorCorrectionInv(FogColor.rgb);
@@ -187,5 +193,12 @@ void main() {
   v_color0 = color;
   v_color1 = a_color0;
   v_fog = fogColor;
+  vPos = pos.xyz;
+  RainTime = vec2(rainFactor, ViewPositionAndTime.w);
+  wPos = worldPos;
+  v_FOG_COLOR = FogColor;
+  v_zenithCol = zenithCol;
+  v_horizonCol = horizonCol;
+  v_horizonEdgeCol = horizonEdgeCol;
   gl_Position = pos;
 }
