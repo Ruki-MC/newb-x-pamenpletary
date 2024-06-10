@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - devel
+      - reimagied
 
 jobs:
   windows:
@@ -24,7 +24,7 @@ jobs:
       shell: bash
     - uses: actions/upload-artifact@v4
       with:
-        name: newb-x-windows
+        name: newb-x-pamenpletary-normal-windows
         path: ./build/Windows/temp
   android:
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
     - run: ./pack.sh
     - uses: actions/upload-artifact@v4
       with:
-        name: newb-x-android
+        name: newb-x-pamenpletary-normal-android
         path: ./build/Android/temp
   ios:
     runs-on: ubuntu-latest
@@ -58,5 +58,21 @@ jobs:
     - run: ./build.sh -p iOS
     - uses: actions/upload-artifact@v4
       with:
-        name: newb-x-ios-materials
+        name: newb-x-pamenpletary-normal-ios-materials
         path: ./build/iOS
+  ios-pack:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        key: env-files-linux
+        path: |
+          ${{ github.workspace }}/env
+          ${{ github.workspace }}/data
+    - run: ./setup.sh
+    - run: ./pack.sh -p iOS
+    - uses: actions/upload-artifact@v4
+      with:
+        name: newb-x-pamenpletary-normal-ios-pack
+        path: ./build/iOS/temp
