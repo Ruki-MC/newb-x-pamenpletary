@@ -5,7 +5,7 @@ $input a_color0, a_position
 $output v_color0
 #include <newb/config.h>
 #if defined(TRANSPARENT) && NL_CLOUD_TYPE == 2
-  $output v_color1, v_color2, v_fogColor
+  $output v_color1, v_color2, v_fogColor, v_zenithCol, v_horizonCol, v_fogCol
 #endif
 
 #include <bgfx_shader.sh>
@@ -83,8 +83,27 @@ void main() {
       v_color2 = vec4(fogCol,ViewPositionAndTime.w);
       v_color1 = vec4(zenithCol,rain);
       color = vec4(worldPos, fade);
+      v_zenithCol = zenithCol;
+      v_horizonCol = horizonCol;
+      v_fogCol = fogCol;
     #endif 
-  #endif
+  
+  
+  //#if NL_CLOUD_TYPE == 2
+      //vec3 vDir = normalize(pos);
+      //color = renderClouds(vDir, pos, rain, t,zenithCol, fogCol );
+
+      //#ifdef NL_AURORA
+        //color += renderAurora(worldPos, t, rain, fogCol);
+      //#endif
+    
+    //color.a *= fade;
+    //color.rgb = colorCorrection(color.rgb);
+
+    //#endif 
+    
+   #endif
+   
 
   v_color0 = color;
   gl_Position = mul(u_viewProj, vec4(worldPos, 1.0));

@@ -10,3 +10,6 @@ vec4 v_color0       : COLOR0;
 vec4 v_color1       : COLOR1;
 vec4 v_color2       : COLOR2;
 vec3 v_fogColor     : COLOR3;
+vec3 v_zenithCol    : COLOR4;
+vec3 v_horizonCol   : COLOR5;
+vec3 v_fogCol       : COLOR6;
