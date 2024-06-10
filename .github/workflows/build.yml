@@ -61,7 +61,7 @@ jobs:
         name: newb-x-pamenpletary-normal-ios-materials
         path: ./build/iOS
   ios-pack:
-    runs-on: ubuntu-latest
+    runs-on: windows-2019
     steps:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
